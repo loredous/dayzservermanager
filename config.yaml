@@ -1,0 +1,49 @@
+app_config:
+  startup_wait_sec: 300
+  update_freq_sec: 30
+shared:
+  base_path: C:\Program Files (x86)\Steam\steamapps\common\DayZServer
+  restart_time: 240
+  cpu: 2
+servers:
+  - server_name: cherno_test
+    name: Cherno DayZ Server
+    port: 2331
+    config_file: serverDZ_test.cfg
+    executable: DayZServer_x64_test.exe
+    profiles: C:\Program Files (x86)\Steam\steamapps\common\DayZServer\config_chernotest
+    mods:
+      - BaseBuildingPlus
+      - CF
+      - VanillaPlusPlusMap
+      - VPPAdminTools
+      - Code Lock
+      - AmmoStackBullet
+      - ZombieRunOverSound
+      - Easy Signs [by Cl0ud]
+      - PristineRepair+
+      - UsefulSuppressors
+      - Loot Barrel Transfer
+      - InventoryInCaar
+      - Gas-Pump-Refueling
+      - Unlimited Stamina
+      - OP_BaseItems
+      - Solar Panel Power System
+      - DayZ-Dog
+      - SchanaModGlobalChat
+      - SchanaModParty
+      - MuchFramework
+      - MuchStuffPack
+      - Ear-Plugs
+      - Powerstrip
+      - RaG_BaseItems
+      - Combinable Items
+      - RaG_Hunting_Cabin
+      - BodyBags
+      - SIX-DayZ-Auto-Run
+    extra_args:
+      - dologs
+      - adminlog
+      - netlog
+      - freezecheck
+    
