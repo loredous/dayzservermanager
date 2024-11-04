@@ -9,6 +9,8 @@ jobs:
   build_wheel:
     name: build Python wheel
     runs-on: ubuntu-22.04
+    permissions:
+      contents: write
     steps:
     - name: Setup Python
       uses: actions/setup-python@v5.3.0
