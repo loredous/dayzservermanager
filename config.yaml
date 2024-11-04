@@ -6,41 +6,12 @@ shared:
   restart_time: 240
   cpu: 2
 servers:
-  - server_name: cherno_test
-    name: Cherno DayZ Server
+  - server_name: sakhal
+    name: Sakhal DayZ Server
     port: 2331
-    config_file: serverDZ_test.cfg
-    executable: DayZServer_x64_test.exe
-    profiles: C:\Program Files (x86)\Steam\steamapps\common\DayZServer\config_chernotest
-    mods:
-      - BaseBuildingPlus
-      - CF
-      - VanillaPlusPlusMap
-      - VPPAdminTools
-      - Code Lock
-      - AmmoStackBullet
-      - ZombieRunOverSound
-      - Easy Signs [by Cl0ud]
-      - PristineRepair+
-      - UsefulSuppressors
-      - Loot Barrel Transfer
-      - InventoryInCaar
-      - Gas-Pump-Refueling
-      - Unlimited Stamina
-      - OP_BaseItems
-      - Solar Panel Power System
-      - DayZ-Dog
-      - SchanaModGlobalChat
-      - SchanaModParty
-      - MuchFramework
-      - MuchStuffPack
-      - Ear-Plugs
-      - Powerstrip
-      - RaG_BaseItems
-      - Combinable Items
-      - RaG_Hunting_Cabin
-      - BodyBags
-      - SIX-DayZ-Auto-Run
+    config_file: serverDZ.cfg
+    executable: DayZServer_x64.exe
+    profiles: C:\Program Files (x86)\Steam\steamapps\common\DayZServer\sakhal
     extra_args:
       - dologs
       - adminlog

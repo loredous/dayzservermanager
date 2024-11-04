@@ -35,22 +35,18 @@ class DayzServerConfig:
 
 
 class DayzServer:
-    config: DayzServerConfig
-    process: Popen
-    logger: Logger
 
     def __init__(self, config):
         self.config = config
         self.process = None
         self.logger = getLogger(f'DayzServer[{self.config.server_name}]')
-        self.logger.setLevel(INFO if self.config.debug else DEBUG)
 
     def start_server(self):
         self.logger.info(f'Starting server')
         args = self._build_server_args()
         self.logger.debug(f'Base Path: {self.config.base_path}')
         self.logger.debug(f'Args: {args}')
-        self.process = Popen(args,cwd=self.config.base_path)
+        self.process = Popen(args)
         self.logger.info(f'Server started with pid {self.process.pid}')
 
     def stop_server(self):
@@ -74,7 +70,9 @@ class DayzServer:
         
     @property
     def is_alive(self) -> bool:
-        if not self.process.poll:
+        if not self.process:
+            return False
+        if not self.process.poll():
             return True
         return False
 
