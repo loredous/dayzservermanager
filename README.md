@@ -24,8 +24,8 @@ The primary configuration for DZSM defaults to a file called `config.yaml`. This
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `startup_wait_sec` | 60 | Defines the backoff time between server startup actions (in seconds). If servers start too quickly, it can cause problems with the Steam API|
-| `update_freq_sec` | 30 | Defines the time between health-check cycles (in seconds) |
+| `startup_delay` | 60 | Defines the backoff time between server startup actions (in seconds). If servers start too quickly, it can cause problems with the Steam API|
+| `update_interval` | 30 | Defines the time between health-check cycles (in seconds) |
 
 ### `shared` / `servers`
 
@@ -40,6 +40,6 @@ The primary configuration for DZSM defaults to a file called `config.yaml`. This
 | `restart_time` | None | Yes | Time interval (in minutes) for automatic server restarts |
 | `profiles` | None | Yes | Relative or full path to the mission directory |
 | `extra_args` | None | No | Additional command line arguments to pass to the server executable |
-| `mods` | None | No | List of mods to load for the server |
-| `server_mods` | None | No | List of server-side mods to load |
+| `mods` | None | No | List of mods to load for the server. Mod names should not include the starting @ or ; at end |
+| `server_mods` | None | No | List of server-side mods to load. Mod names should not include the starting @ or ; at end |
 | `cpu` | 2 | No | Number of CPU cores to allocate to the server |

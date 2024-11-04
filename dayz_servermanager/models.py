@@ -51,7 +51,9 @@ class DayzServer:
 
     def stop_server(self):
         self.logger.info("Stopping server")
-        if not self.process.poll():
+        if not self.process:
+            self.logger.debug("No server process to stop")
+        elif not self.process.poll():
             self.logger.debug("Requesting server stop")
             self.process.terminate()
             try:

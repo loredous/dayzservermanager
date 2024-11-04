@@ -1,6 +1,6 @@
 app_config:
-  startup_wait_sec: 300
-  update_freq_sec: 30
+  startup_delay: 300
+  update_interval: 30
 shared:
   base_path: C:\Program Files (x86)\Steam\steamapps\common\DayZServer
   restart_time: 240
@@ -12,6 +12,12 @@ servers:
     config_file: serverDZ.cfg
     executable: DayZServer_x64.exe
     profiles: C:\Program Files (x86)\Steam\steamapps\common\DayZServer\sakhal
+    server_mods:
+      - ServerModNumber1
+      - ServerModNumber2
+    mods:
+      - ModNumber3
+      - ModNumber4
     extra_args:
       - dologs
       - adminlog

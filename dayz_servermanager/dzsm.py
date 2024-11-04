@@ -1,10 +1,11 @@
 from argparse import ArgumentParser, Namespace
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from sys import argv
 from typing import Dict, List
 from dayz_servermanager.models import DayzServer, DayzServerConfig
 from logging import getLogger, basicConfig, DEBUG, INFO
 from time import time, sleep
+from yaml import load, BaseLoader
 
 def parse_args(args) -> Namespace:
     parser = ArgumentParser(prog='DayZ Server Manager')
@@ -18,19 +19,33 @@ class DayzRunningServer:
     start_time: float
     server: DayzServer
 
-class ServerManager:
+@dataclass
+class ServerManagerConfig:
+    startup_delay: int = 60
+    update_interval: int = 30
 
-    def __init__(self, configs: List[DayzServerConfig], startup_delay: int = 60):
+    def __post_init__(self):
+        for field in fields(self):
+            setattr(self, field.name, field.type(getattr(self, field.name)))
+
+    @classmethod
+    def from_config_file(cls, config_file) -> 'ServerManagerConfig':
+        with open(config_file, 'r') as config:
+            config_object = load(config, Loader=BaseLoader)
+            return cls(**config_object.get('app_config', {}))
+
+class ServerManager:
+    def __init__(self, server_configs: List[DayzServerConfig], manager_config: ServerManagerConfig):
         self.logger = getLogger("ServerManager")
         self.servers = {}
-        self.logger.info(f'Loading configs for {len(configs)} servers')
-        self.startup_delay = startup_delay
+        self.logger.info(f'Loading configs for {len(server_configs)} servers')
         self.last_server_start = -1
-        for config in configs:
+        self.config = manager_config
+        for config in server_configs:
             self.servers[config.server_name] = DayzRunningServer(-1, -1, DayzServer(config))
 
     def start_server(self, server_name: str):
-        if time() - self.last_server_start < self.startup_delay:
+        if time() - self.last_server_start < self.config.startup_delay:
             self.logger.info(f'Not starting server {server_name}. In backoff period')
             return
         server = self.servers.get(server_name)
@@ -38,11 +53,12 @@ class ServerManager:
             server.server.start_server()
             server.pid = server.server.process.pid
             server.start_time = time()
+            self.last_server_start = time()
         else:
             self.logger.error(f'No server with name {server_name}')
 
     def restart_server(self, server_name: str):
-        if time() - self.last_server_start < self.startup_delay:
+        if time() - self.last_server_start < self.config.startup_delay:
             self.logger.info(f'Not restarting server {server_name}. In backoff period')
             return
         server = self.servers.get(server_name)
@@ -65,7 +81,7 @@ class ServerManager:
                         if time() - server.start_time > int(server.server.config.restart_time)*60:
                             self.logger.info(f'Server {server.server.config.server_name} is alive for {time() - server.start_time} seconds, restarting')
                             self.restart_server(server.server.config.server_name)
-                sleep(30)
+                sleep(self.config.update_interval)
         except KeyboardInterrupt:
             self.logger.info('Got Ctrl+C. Shutting down!')
             for server in self.servers.values():
@@ -78,9 +94,10 @@ def main():
     basicConfig(level=DEBUG if arguments.verbose else INFO)
     logger = getLogger()
     logger.info('Starting DayZ Server Manager')
-    configs = DayzServerConfig.from_config_file(arguments.config)
-    logger.info(f'Got configs for {len(configs)} servers')
-    manager = ServerManager(configs)
+    server_configs = DayzServerConfig.from_config_file(arguments.config)
+    manager_config = ServerManagerConfig.from_config_file(arguments.config)
+    logger.info(f'Got configs for {len(server_configs)} servers')
+    manager = ServerManager(server_configs, manager_config)
     manager.run()
 
 if __name__ == '__main__':
