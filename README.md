@@ -1,5 +1,9 @@
-# DayZ Server Manager (DZSM)
+<center>
+<h1>DayZ Server Manager (DZSM)<h1>
 
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/loredous/dayzservermanager/python_build.yml)
+![GitHub Release](https://img.shields.io/github/v/release/loredous/dayzservermanager)
+</center>
 A basic utility for managing one or more DayZ servers, including managment of startup, restart, and configurations.
 
 ## Quick Start
