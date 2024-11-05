@@ -2,7 +2,7 @@ from typing import List
 from dataclasses import dataclass, field
 from subprocess import Popen, PIPE, DEVNULL, TimeoutExpired
 from logging import getLogger, Logger, DEBUG,INFO
-from time import sleep
+from time import sleep, time
 from yaml import load, BaseLoader
 from steam import SteamQuery
 
@@ -35,7 +35,7 @@ class DayzServerConfig:
         return configs
     
 @dataclass
-class SteamQueryData:
+class ServerData:
     online: bool
     ip: str
     port: int
@@ -50,6 +50,7 @@ class SteamQueryData:
     vac_secure: bool
     server_type: str
     os: str
+    uptime: int
 
 
 
@@ -59,6 +60,7 @@ class DayzServer:
         self.config = config
         self.process = None
         self.logger = getLogger(f'DayzServer[{self.config.server_name}]')
+        self.start_time = -1
 
     def start_server(self):
         self.logger.info(f'Starting server')
@@ -66,7 +68,8 @@ class DayzServer:
         self.logger.debug(f'Base Path: {self.config.base_path}')
         self.logger.debug(f'Args: {args}')
         self.process = Popen(args)
-        self.steamquery = SteamQuery("127.0.0.1",self.config.steamquery_port,timeout=5)
+        self.steamquery = SteamQuery("127.0.0.1",int(self.config.steamquery_port),timeout=5)
+        self.start_time = time()
         self.logger.info(f'Server started with pid {self.process.pid}')
 
     def stop_server(self):
@@ -100,10 +103,10 @@ class DayzServer:
     
     def get_server_data(self):
         if self.process and self.is_alive:
-            data = self.steamquery.get_server_info()
+            data = self.steamquery.query_server_info()
             self.logger.debug(f'Server Data: {data}')
             if data and not data.get('error'):
-                return SteamQueryData(**data)
+                return ServerData(uptime=time() - self.start_time ,**data)
         return None
 
     def _build_server_args(self) -> List[str]:

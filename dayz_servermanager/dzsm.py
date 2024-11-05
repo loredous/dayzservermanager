@@ -2,7 +2,7 @@ from argparse import ArgumentParser, Namespace
 from dataclasses import dataclass, fields
 from sys import argv
 from typing import Dict, List
-from dayz_servermanager.server import DayzServer, DayzServerConfig, SteamQueryData
+from dayz_servermanager.server import DayzServer, DayzServerConfig, ServerData
 from logging import getLogger, basicConfig, DEBUG, INFO
 from time import time, sleep
 from yaml import load, BaseLoader
@@ -106,9 +106,9 @@ class ServerManager:
     def print_server_report(self, server_name):
         server = self.servers.get(server_name)
         if server:
-            data: SteamQueryData = server.server.get_server_data()
+            data: ServerData = server.server.get_server_data()
             if data:
-                print(f'Server: {server_name} ({data.ip}:{data.port}) | {data.players}/{data.max_players}')
+                print(f'Server: {server_name} ({data.ip}:{data.port}) | {data.players}/{data.max_players} | Uptime: {int(data.uptime/60)}')
             else:
                 print(f'No data for server {server_name}')
         else:
