@@ -14,6 +14,7 @@ class DayzServerConfig:
     config_file: str
     executable: str
     port: int
+    steamquery_port: int
     restart_time: int
     profiles: str
     extra_args: List[str] = field(default_factory=list)
@@ -85,8 +86,9 @@ class DayzServer:
             self.config.executable, 
             f'-config={self.config.config_file}', 
             f'-port={self.config.port}', 
-            f'"-profiles={self.config.profiles}"'
-            f'-cpuCount={self.config.cpu}'
+            f'"-profiles={self.config.profiles}"',
+            f'-cpuCount={self.config.cpu}',
+            f'-steamQueryPort={self.config.steamquery_port}'
             ]
         if self.config.mods:
             args.append(self._mods_to_commandline(self.config.mods, "mod"))

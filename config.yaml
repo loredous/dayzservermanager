@@ -6,21 +6,21 @@ shared:
   restart_time: 240
   cpu: 2
 servers:
-  - server_name: sakhal
-    name: Sakhal DayZ Server
-    port: 2331
-    config_file: serverDZ.cfg
-    executable: DayZServer_x64.exe
-    profiles: C:\Program Files (x86)\Steam\steamapps\common\DayZServer\sakhal
-    server_mods:
-      - ServerModNumber1
-      - ServerModNumber2
-    mods:
-      - ModNumber3
-      - ModNumber4
-    extra_args:
-      - dologs
-      - adminlog
-      - netlog
-      - freezecheck
-    
+- server_name: sakhal
+  name: Sakhal DayZ Server
+  port: 2331
+  steamquery_port: 27016
+  config_file: serverDZ.cfg
+  executable: DayZServer_x64.exe
+  profiles: C:\Program Files (x86)\Steam\steamapps\common\DayZServer\sakhal
+  server_mods:
+  - ServerModNumber1
+  - ServerModNumber2
+  mods:
+  - ModNumber3
+  - ModNumber4
+  extra_args:
+  - dologs
+  - adminlog
+  - netlog
+  - freezecheck
