@@ -30,6 +30,7 @@ The primary configuration for DZSM defaults to a file called `config.yaml`. This
 |---------|---------|-------------|
 | `startup_delay` | 60 | Defines the backoff time between server startup actions (in seconds). If servers start too quickly, it can cause problems with the Steam API|
 | `update_interval` | 30 | Defines the time between health-check cycles (in seconds) |
+| `continue_on_steamquery` | False | Ends backoff period once server shows up via SteamQuery |
 
 ### `shared` / `servers`
 
@@ -38,6 +39,7 @@ The primary configuration for DZSM defaults to a file called `config.yaml`. This
 | `server_name` | None | Yes | The internal name for this server instance. Used in logging and system menus|
 | `name` | None | Yes | The name that should be shown for this server instance in the server browser |
 | `port` | None | Yes | Port to be used for this server instance |
+| `steamquery_port` | None | Yes | Port to be used for SteamQuery for this instance |
 | `base_path` | None | Yes | Full path to the DayZ Server data folder |
 | `config_file` | None | Yes | Relative or full path to the server configuration file |
 | `executable` | None | Yes | Relative or full path to the DayZ server executable |

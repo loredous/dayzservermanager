@@ -2,8 +2,9 @@ from typing import List
 from dataclasses import dataclass, field
 from subprocess import Popen, PIPE, DEVNULL, TimeoutExpired
 from logging import getLogger, Logger, DEBUG,INFO
-from time import sleep
+from time import sleep, time
 from yaml import load, BaseLoader
+from steam import SteamQuery
 
 
 @dataclass
@@ -14,6 +15,7 @@ class DayzServerConfig:
     config_file: str
     executable: str
     port: int
+    steamquery_port: int
     restart_time: int
     profiles: str
     extra_args: List[str] = field(default_factory=list)
@@ -31,6 +33,24 @@ class DayzServerConfig:
                 combined_config = config_object['shared'] | server
                 configs.append(cls(**combined_config))
         return configs
+    
+@dataclass
+class ServerData:
+    online: bool
+    ip: str
+    port: int
+    name: str
+    map: str
+    game: str
+    description: str
+    players: int
+    max_players: int
+    bots: int
+    password_required: bool
+    vac_secure: bool
+    server_type: str
+    os: str
+    uptime: int
 
 
 
@@ -40,6 +60,7 @@ class DayzServer:
         self.config = config
         self.process = None
         self.logger = getLogger(f'DayzServer[{self.config.server_name}]')
+        self.start_time = -1
 
     def start_server(self):
         self.logger.info(f'Starting server')
@@ -47,6 +68,8 @@ class DayzServer:
         self.logger.debug(f'Base Path: {self.config.base_path}')
         self.logger.debug(f'Args: {args}')
         self.process = Popen(args)
+        self.steamquery = SteamQuery("127.0.0.1",int(self.config.steamquery_port),timeout=5)
+        self.start_time = time()
         self.logger.info(f'Server started with pid {self.process.pid}')
 
     def stop_server(self):
@@ -77,16 +100,23 @@ class DayzServer:
         if not self.process.poll():
             return True
         return False
-
-
+    
+    def get_server_data(self):
+        if self.process and self.is_alive:
+            data = self.steamquery.query_server_info()
+            self.logger.debug(f'Server Data: {data}')
+            if data and not data.get('error'):
+                return ServerData(uptime=time() - self.start_time ,**data)
+        return None
 
     def _build_server_args(self) -> List[str]:
         args = [
             self.config.executable, 
             f'-config={self.config.config_file}', 
             f'-port={self.config.port}', 
-            f'"-profiles={self.config.profiles}"'
-            f'-cpuCount={self.config.cpu}'
+            f'"-profiles={self.config.profiles}"',
+            f'-cpuCount={self.config.cpu}',
+            f'-steamQueryPort={self.config.steamquery_port}'
             ]
         if self.config.mods:
             args.append(self._mods_to_commandline(self.config.mods, "mod"))

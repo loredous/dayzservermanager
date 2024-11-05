@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dayz-servermanager"
-version = "1.0.0"
+version = "1.1.0a3"
 description = "Basic tool to manage the startup and restarting of multiple DayZ servers"
 authors = ["Jeremy <loredous@loredous.net>"]
 license = "MIT"
@@ -9,6 +9,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.10"
 PyYAML = "^6.0.2"
+steamquery = "^1.0.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.3"
