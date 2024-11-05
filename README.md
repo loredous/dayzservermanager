@@ -30,6 +30,7 @@ The primary configuration for DZSM defaults to a file called `config.yaml`. This
 |---------|---------|-------------|
 | `startup_delay` | 60 | Defines the backoff time between server startup actions (in seconds). If servers start too quickly, it can cause problems with the Steam API|
 | `update_interval` | 30 | Defines the time between health-check cycles (in seconds) |
+| `continue_on_steamquery` | False | Ends backoff period once server shows up via SteamQuery |
 
 ### `shared` / `servers`
 

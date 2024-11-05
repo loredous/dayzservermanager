@@ -1,6 +1,7 @@
 app_config:
   startup_delay: 300
   update_interval: 30
+  continue_on_steamquery: True
 shared:
   base_path: C:\Program Files (x86)\Steam\steamapps\common\DayZServer
   restart_time: 240

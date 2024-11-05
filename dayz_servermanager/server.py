@@ -4,6 +4,7 @@ from subprocess import Popen, PIPE, DEVNULL, TimeoutExpired
 from logging import getLogger, Logger, DEBUG,INFO
 from time import sleep
 from yaml import load, BaseLoader
+from steam import SteamQuery
 
 
 @dataclass
@@ -32,6 +33,23 @@ class DayzServerConfig:
                 combined_config = config_object['shared'] | server
                 configs.append(cls(**combined_config))
         return configs
+    
+@dataclass
+class SteamQueryData:
+    online: bool
+    ip: str
+    port: int
+    name: str
+    map: str
+    game: str
+    description: str
+    players: int
+    max_players: int
+    bots: int
+    password_required: bool
+    vac_secure: bool
+    server_type: str
+    os: str
 
 
 
@@ -48,6 +66,7 @@ class DayzServer:
         self.logger.debug(f'Base Path: {self.config.base_path}')
         self.logger.debug(f'Args: {args}')
         self.process = Popen(args)
+        self.steamquery = SteamQuery("127.0.0.1",self.config.steamquery_port,timeout=5)
         self.logger.info(f'Server started with pid {self.process.pid}')
 
     def stop_server(self):
@@ -78,8 +97,14 @@ class DayzServer:
         if not self.process.poll():
             return True
         return False
-
-
+    
+    def get_server_data(self):
+        if self.process and self.is_alive:
+            data = self.steamquery.get_server_info()
+            self.logger.debug(f'Server Data: {data}')
+            if data and not data.get('error'):
+                return SteamQueryData(**data)
+        return None
 
     def _build_server_args(self) -> List[str]:
         args = [
