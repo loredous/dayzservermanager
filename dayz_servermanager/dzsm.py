@@ -4,9 +4,11 @@ from sys import argv
 from typing import Dict, List
 from dayz_servermanager.server import DayzServer, DayzServerConfig, ServerData
 from logging import getLogger, basicConfig, DEBUG, INFO
-from time import time, sleep
+from time import time
 from yaml import load, BaseLoader
 from os import system, name
+from asyncio import Timeout, get_event_loop, sleep, timeout, run
+from signal import SIGINT, signal
 
 def parse_args(args) -> Namespace:
     parser = ArgumentParser(prog='DayZ Server Manager')
@@ -25,6 +27,7 @@ class ServerManagerConfig:
     startup_delay: int = 60
     update_interval: int = 30
     continue_on_steamquery: bool = False
+    command_mode_timeout: int = 10
 
     def __post_init__(self):
         for field in fields(self):
@@ -43,8 +46,16 @@ class ServerManager:
         self.logger.info(f'Loading configs for {len(server_configs)} servers')
         self.last_server_start = -1
         self.config = manager_config
+        self.running = False
+        self.configure_commands()
         for config in server_configs:
             self.servers[config.server_name] = DayzRunningServer(-1, -1, DayzServer(config))
+
+    def configure_commands(self):
+        self.commands = [
+        ('Restart specific server', self.restart_server_command),
+        ('Terminate', self.shut_down_command)
+    ]
 
     def start_server(self, server_name: str):
         if time() - self.last_server_start < self.config.startup_delay:
@@ -71,37 +82,84 @@ class ServerManager:
         else:
             self.logger.error(f'No server with name {server_name}')
 
-    def run(self):
+    async def run(self):
+        self.starting_server = None
+        self.running = True
+        self.loop = get_event_loop()
+        self.checkin_handle = self.loop.call_soon(self.server_checkin)
+        signal(SIGINT, self.handle_sigint)
+        while self.running:
+            await sleep(1)
+                    
+    def handle_sigint(self, signum, frame):
+        self.checkin_handle.cancel()
+        self.loop.create_task(self.command_mode())
+        
+
+
+    async def command_mode(self):
+        print('========== Command Mode ==========')
+        for index, command in enumerate(self.commands):
+            print(f'{index+1}: {command[0]}')
         try:
-            self.starting_server = None
-            while True:
-                clear_console()
-                print('========== DayZ Server Manager ==========')
-                for server in self.servers.values():
-                    self.print_server_report(server.server.config.server_name)
-                print('=========================================')
-                if self.starting_server and self.config.continue_on_steamquery:
-                    if server_data := self.starting_server.server.get_server_data():
-                        if server_data.online:
-                            self.logger.info(f'Server {self.starting_server.server.config.server_name} shows online via SteamQuery. Skipping backoff period')
-                            self.starting_server = None
-                            self.last_server_start = -1
-                for server in self.servers.values():
-                    self.logger.debug(f'Server {server.server.config.server_name}, process: {server.server.process}, Alive: {server.server.is_alive}')
-                    if not server.server.process or not server.server.is_alive:
-                        self.logger.debug(f'Server {server.server.config.server_name} is dead, trying to start')
-                        self.start_server(server.server.config.server_name)
-                    else:
-                        self.logger.debug(f'Server {server.server.config.server_name} is alive for {time() - server.start_time} seconds')
-                        if time() - server.start_time > int(server.server.config.restart_time)*60:
-                            self.logger.info(f'Server {server.server.config.server_name} is alive for {time() - server.start_time} seconds, restarting')
-                            self.restart_server(server.server.config.server_name)
-                sleep(self.config.update_interval)
-        except KeyboardInterrupt:
-            self.logger.info('Got Ctrl+C. Shutting down!')
-            for server in self.servers.values():
-                self.logger.info(f'Stopping server {server.server.config.server_name}')
-                server.server.stop_server()
+            async with timeout(self.config.command_mode_timeout) as timeout_manager:
+                command = int(input('Enter command number: '))
+                if command > 0 and command <= len(self.commands):
+                    await self.commands[command-1][1](timeout_manager)
+                else:
+                    print('Invalid command')
+        except TimeoutError:
+            print('Timeout exceeded, resuming normal operation')
+        if self.running:
+            self.checkin_handle = self.loop.call_soon(self.server_checkin)
+            
+
+    def server_checkin(self):
+        clear_console()
+        print('========== DayZ Server Manager ==========')
+        for server in self.servers.values():
+            self.print_server_report(server.server.config.server_name)
+        print('======== Ctrl+C for Command Mode ========')
+        if self.starting_server and self.config.continue_on_steamquery:
+            if server_data := self.starting_server.server.get_server_data():
+                if server_data.online:
+                    self.logger.info(f'Server {self.starting_server.server.config.server_name} shows online via SteamQuery. Skipping backoff period')
+                    self.starting_server = None
+                    self.last_server_start = -1
+        for server in self.servers.values():
+            self.logger.debug(f'Server {server.server.config.server_name}, process: {server.server.process}, Alive: {server.server.is_alive}')
+            if not server.server.process or not server.server.is_alive:
+                self.logger.debug(f'Server {server.server.config.server_name} is dead, trying to start')
+                self.start_server(server.server.config.server_name)
+            else:
+                self.logger.debug(f'Server {server.server.config.server_name} is alive for {time() - server.start_time} seconds')
+                if time() - server.start_time > int(server.server.config.restart_time)*60:
+                    self.logger.info(f'Server {server.server.config.server_name} is alive for {time() - server.start_time} seconds, restarting')
+                    self.restart_server(server.server.config.server_name)
+        self.loop.create_future
+        self.checkin_handle = self.loop.call_at(self.loop.time() + self.config.update_interval, self.server_checkin)
+
+    async def restart_server_command(self, timeout_manager: Timeout):
+        timeout_manager.reschedule(self.config.command_mode_timeout)
+        print('========== Restart Server ==========')
+        for index, server in enumerate(self.servers.values()):
+            print(f'{index+1}: {server.server.config.server_name}')
+        server_index = int(input('Enter server number: '))
+        if server_index > 0 and server_index <= len(self.servers):
+            server = list(self.servers.values())[server_index-1]
+            server.server.stop_server()
+        else:
+            print('Invalid server number')
+
+    
+    async def shut_down_command(self, timeout_manager: Timeout):
+        timeout_manager.reschedule(300)
+        self.running = False
+        self.logger.info('Shutting down!')
+        for server in self.servers.values():
+            self.logger.info(f'Stopping server {server.server.config.server_name}')
+            server.server.stop_server()
+        
 
     def print_server_report(self, server_name):
         server = self.servers.get(server_name)
@@ -123,7 +181,7 @@ def clear_console():
     else:
         _ = system('clear')
 
-def main():
+async def start_server_manager():
     arguments = parse_args(argv)
     basicConfig(level=DEBUG if arguments.verbose else INFO)
     logger = getLogger()
@@ -132,7 +190,12 @@ def main():
     manager_config = ServerManagerConfig.from_config_file(arguments.config)
     logger.info(f'Got configs for {len(server_configs)} servers')
     manager = ServerManager(server_configs, manager_config)
-    manager.run()
+    await manager.run()
+
+def main():
+    loop = get_event_loop()
+    loop.run_until_complete(start_server_manager())
+    loop.close()
 
 if __name__ == '__main__':
     main()
